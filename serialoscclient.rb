@@ -1564,7 +1564,7 @@ end
 
 # TODO: consider distinguishing Ruby osc server and serialoscd daemon host and ports using serialoscd when referring to daemon
 class SerialOSC
-	DEFAULT_TIMEOUT = 0.05
+	DEFAULT_TIMEOUT = 0.5
 	OSCSERVER_HOST = "127.0.0.1" # TODO: naming
 	OSCSERVER_PORT = 8001 # TODO: naming
 
