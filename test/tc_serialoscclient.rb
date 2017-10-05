@@ -1,5 +1,5 @@
 require 'test/unit'
-require './serialoscclient'
+require 'serialoscclient'
 
 class TestProcListExtensions < Test::Unit::TestCase
 	def setup

@@ -3,7 +3,7 @@ require 'rake/testtask'
 task :default => [:test_serialoscclient]
 
 Rake::TestTask.new(:test_serialoscclient) do |t|
-	t.test_files = ["tc_serialoscclient.rb"]
+	t.test_files = ["test/tc_serialoscclient.rb"]
 	t.warning = true
 end
 
@@ -15,5 +15,5 @@ task :irb => :environment do
 end
 
 task :environment do
-	require './serialoscclient'
+	require './lib/serialoscclient'
 end
