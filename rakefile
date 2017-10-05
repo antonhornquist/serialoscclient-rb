@@ -1,0 +1,19 @@
+require 'rake/testtask'
+
+task :default => [:test_serialoscclient]
+
+Rake::TestTask.new(:test_serialoscclient) do |t|
+	t.test_files = ["tc_serialoscclient.rb"]
+	t.warning = true
+end
+
+# TODO: fix, does not work right now
+task :irb => :environment do
+	require 'irb'
+	ARGV.clear
+	IRB.start
+end
+
+task :environment do
+	require './serialoscclient'
+end

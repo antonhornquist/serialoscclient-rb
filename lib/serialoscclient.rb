@@ -2,7 +2,7 @@ require 'set'
 require 'osc-ruby'
 
 #
-# Dependancy support
+# SuperCollider dependancy support port
 #
 class Object
 	# dependancy support
@@ -50,6 +50,35 @@ class Object
 	end
 
 	def update(the_changed, the_changer, *more_args)
+	end
+end
+
+class SimpleController
+	# responds to updates of a model
+	def initialize(model)
+		@model = model
+		@model.add_dependant(self)
+	end
+
+	def put(what, action)
+		@actions = Hash.new unless @actions
+		@actions[what] = action
+	end
+
+	def update(the_changer, what, *more_args)
+		if action = @actions[what]
+			action.call(the_changer, what, *more_args)
+		end
+	end
+
+	def remove
+		model.remove_dependant(self)
+	end
+end
+
+class TestDependant
+	def update(thing)
+		puts "#{thing} was changed."
 	end
 end
 
@@ -126,61 +155,6 @@ class Proc
 	alias :add_func :add_proc
 	alias :remove_func :remove_proc
 	alias :update :call
-end
-
-#
-# Point:
-# Based on SuperCollider's Point Class
-#
-class Point
-	attr_accessor :x, :y
-
-	def initialize(x, y)
-		@x = x
-		@y = y
-	end
-
-	def ==(point)
-		@x == point.x and @y == point.y
-	end
-
-	def -(point)
-		Point.new(@x-point.x, @y-point.y)
-	end
-
-	def +(point)
-		Point.new(@x+point.x, @y+point.y)
-	end
-
-	def dist(point)
-		Math::sqrt( (@x-point.x)**2 + (@y-point.y)**2 )
-	end
-
-	def to_s
-		"#@x@#@y"
-	end
-
-	def to_point; self; end
-end
-
-#
-# NilClass extension
-# support for to_point
-#
-class NilClass
-	def to_point
-		self
-	end
-end
-
-#
-# String extension
-# to_point - simple point creation
-#
-class String
-	def to_point
-		Point.new( *self.split('@').collect { |s| s.to_i } )
-	end
 end
 
 class SerialOSCClient
