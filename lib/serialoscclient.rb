@@ -196,7 +196,7 @@ class SerialOSCClient
 	end
 
 	@@connected_devices = []
-	@@devices_semaphore = Mutex.new
+	@@devices_list_semaphore = Mutex.new
 
 	@@recv_serialoscfunc = nil
 
@@ -224,8 +224,7 @@ class SerialOSCClient
 
 	@@device_added_handler = lambda do |id|
 		Thread.new do
-			# TODO: here and in SuperCollider, defer a *complete* lookup of devices - both for added and removed device notifications - some milliseconds?
-			@@devices_semaphore.synchronize do
+			@@devices_list_semaphore.synchronize do
 				if not pr_lookup_device_by_id(id)
 					pr_update_devices_list_async(
 						lambda do |devices_added_to_devices_list, devices_removed_from_devices_list|
@@ -243,8 +242,7 @@ class SerialOSCClient
 
 	@@device_removed_handler = lambda do |id|
 		Thread.new do
-			# TODO: here and in SuperCollider, defer a *complete* lookup of devices - both for added and removed device notifications - some milliseconds?
-			@@devices_semaphore.synchronize do
+			@@devices_list_semaphore.synchronize do
 				device = pr_lookup_device_by_id(id)
 				if device
 					pr_sync_after_device_list_changes([], [device])
@@ -280,15 +278,13 @@ class SerialOSCClient
 
 		@@initialized = true
 		@@running_legacy_mode = false
-		# @@devices_semaphore.synchronize do # TODO: below is async, this has no effect?
-			pr_update_devices_list_async(
-				lambda do |devices_added_to_devices_list, devices_removed_from_devices_list|
-					post_devices
-					pr_sync_after_device_list_changes(devices_added_to_devices_list, devices_removed_from_devices_list)
-					completion_func.call if completion_func
-				end
-			)
-		# end # TODO: above is async, this has no effect?
+		pr_update_devices_list_async(
+			lambda do |devices_added_to_devices_list, devices_removed_from_devices_list|
+				post_devices
+				pr_sync_after_device_list_changes(devices_added_to_devices_list, devices_removed_from_devices_list)
+				completion_func.call if completion_func
+			end
+		)
 		self
 	end
 
@@ -308,8 +304,6 @@ class SerialOSCClient
 		self.pr_legacy_mode(autoconnect, verbose, LegacySerialOSCGrid.new("monome 256", nil, @@default_legacy_mode_listen_port, 0))
 	end
 
-	# TODO: test legacy mode with MonomeSerial and old grid
-	# TODO: check if serialoscclient.rb works on old macbook with old grid and legacy mode
 	def self.pr_legacy_mode(autoconnect=true, verbose=false, legacy_grid)
 		pr_init(autoconnect, verbose)
 
@@ -324,7 +318,7 @@ class SerialOSCClient
 		post_devices
 		pr_sync_after_device_list_changes(devices, devices_removed_from_devices_list)
 
-		puts("SerialOSCClient is running in legacy mode. For an attached grid to work MonomeSerial has to run and be configured with Host Port %d, Address Prefix /monome and Listen Port %d." % [SerialOSC::OSCSERVER_PORT, legacy_grid.port])
+		puts("SerialOSCClient is running in legacy mode. For an attached grid to work MonomeSerial has to run and be configured with Host Port %d, Address Prefix /monome and Listen Port %d." % [SerialOSC::OSC_RUBY_SERVER_PORT, legacy_grid.port])
 	end
 
 	def self.pr_init(autoconnect, verbose)
@@ -425,7 +419,7 @@ class SerialOSCClient
 				)
 				SerialOSC.change_device_destination_port(
 					device.port,
-					SerialOSC::OSCSERVER_PORT 
+					SerialOSC::OSC_RUBY_SERVER_PORT 
 				)
 			end
 
@@ -501,7 +495,7 @@ class SerialOSCClient
 	end
 
 	def self.pr_is_enc_type(type)
-		type.to_s =~ /arc/ # TODO: ruby diff
+		type.to_s =~ /arc/
 	end
 
 	def self.pr_update_devices_list_async(completion_func=nil)
@@ -823,7 +817,6 @@ class SerialOSCClient
 	def self.grid_matches_spec(grid, grid_spec)
 		num_rows = grid.num_rows
 		num_cols = grid.num_cols
-		# TODO: verify match clauses work
 		case
 		when grid_spec == :any then true
 		when (grid_spec.respond_to?(:key) and grid_spec.respond_to?(:value)) then
@@ -834,7 +827,6 @@ class SerialOSCClient
 	end
 
 	def self.enc_matches_spec(enc, enc_spec)
-		# TODO: verify match clauses work
 		(enc_spec == :any) or (enc_spec == @enc.num_encs)
 	end
 
@@ -1037,7 +1029,7 @@ class SerialOSCDevice
 
 	def pr_send_msg(address, *args)
 		message = OSC::Message.new(pr_get_prefixed_address(address), *args)
-		client = OSC::Client.new(SerialOSC.serialoscd_host, @port) # TODO: use SerialOSC.pr_send_message or some similar?
+		client = OSC::Client.new(SerialOSC.default_serialoscd_host, @port)
 		client.send(message)
 	end
 
@@ -1130,7 +1122,7 @@ class SerialOSCGrid < SerialOSCDevice
 			lambda { |grid| grid.test_leds },
 			lambda { puts "Unable to run test, no default grid available" }
 		)
-		self # TODO: add in ruby version on other places too?? to not mess up irb when livecoding...
+		self
 	end
 
 	def self.clear_leds
@@ -1209,11 +1201,11 @@ class SerialOSCGrid < SerialOSCDevice
 		@@default.rotation if @@default
 	end
 
-	def self.rotation=(rotation) # TODO: test!
+	def self.rotation=(rotation)
 		do_with_default_when_initialized(lambda { |grid| grid.rotation=(rotation) })
 	end
 
-	def test_leds # TODO: write cooler test, drops kinda
+	def test_leds
 		Thread.new do
 			clear_leds
 			num_rows.times do |y|
@@ -1403,7 +1395,7 @@ class SerialOSCEnc < SerialOSCDevice
 			lambda { |enc| enc.test_leds },
 			lambda { puts "Unable to run test, no default enc available" }
 		)
-		self # TODO: on other places too?? to not mess up irb when livecoding...
+		self
 	end
 
 	def self.clear_rings
@@ -1431,7 +1423,7 @@ class SerialOSCEnc < SerialOSCDevice
 		@@default.num_encs if @@default
 	end
 
-	def test_leds # TODO: write cooler test
+	def test_leds
 		Thread.new do
 			clear_rings
 			num_encs.times do |n|
@@ -1536,14 +1528,13 @@ class LegacySerialOSCGrid < SerialOSCGrid
 	end
 end
 
-# TODO: consider distinguishing Ruby osc server and serialoscd daemon host and ports using serialoscd when referring to daemon
 class SerialOSC
 	DEFAULT_TIMEOUT = 0.5
-	OSCSERVER_HOST = "127.0.0.1" # TODO: naming
-	OSCSERVER_PORT = 8001 # TODO: naming
+	OSC_RUBY_SERVER_HOST = "127.0.0.1"
+	OSC_RUBY_SERVER_PORT = 8001
 
-	@@serialoscd_host = "127.0.0.1" # TODO align naming with SC: defaultSerialOSCHost, convert to class variable, or use defaultSerialoscdHost
-	@@serialoscd_port = 12002 # TODO align naming with SC: defaultSerialOSCPort, convert to class variable, or use defaultSerialoscdPort
+	@@default_serialoscd_host = "127.0.0.1"
+	@@default_serialoscd_port = 12002
 
 	@@osc_server_initialized=false
 	@@registered_osc_recv_func=nil
@@ -1553,27 +1544,22 @@ class SerialOSC
 	@@device_added_func=nil
 	@@device_removed_func=nil
 	@@is_tracking_connected_devices_changes=false
-	@@device_list_semaphore = Mutex.new
-	@@device_info_semaphore = Mutex.new
+	@@async_serialoscd_response_semaphore = Mutex.new
 
-	# TODO: default_ ?
-	def self.serialoscd_host
-		@@serialoscd_host
+	def self.default_serialoscd_host
+		@@default_serialoscd_host
 	end
 
-	# TODO: default_ ?
-	def self.serialoscd_host=(host)
-		@@serialoscd_host = host
+	def self.default_serialoscd_host=(host)
+		@@default_serialoscd_host = host
 	end
 
-	# TODO: default_ ?
-	def self.serialoscd_port
-		@@serialoscd_port
+	def self.default_serialoscd_port
+		@@default_serialoscd_port
 	end
 
-	# TODO: default_ ?
-	def self.serialoscd_port=(port)
-		@@serialoscd_port = port
+	def self.default_serialoscd_port=(port)
+		@@default_serialoscd_port = port
 	end
 
 	def self.is_tracking_connected_devices_changes
@@ -1592,12 +1578,10 @@ class SerialOSC
 		@@trace=on
 	end
 
-	# TODO: this has to be run prior to request_list_of_devices or start_tracking_connected_devices_changes if using SerialOSC solely, document and be clear on this
-	# TODO: ruby only
 	def self.pr_init_osc_server(completion_func=nil)
 		if not @@osc_server_initialized
-			pr_trace_output( "@@osc_server=Server.new(%i)" % [OSCSERVER_PORT] )
-			@@osc_server = OSC::Server.new(OSCSERVER_PORT)
+			pr_trace_output( "@@osc_server=Server.new(%i)" % [OSC_RUBY_SERVER_PORT] )
+			@@osc_server = OSC::Server.new(OSC_RUBY_SERVER_PORT)
 
 			pr_trace_output( "@@osc_server.add_method '/serialosc/device'" )
 			@@osc_server.add_method '/serialosc/device' do |message|
@@ -1662,20 +1646,20 @@ class SerialOSC
 		end
 	end
 
-	# TODO: compare and align Ruby and SuperCollider versions
 	def self.request_list_of_devices(timeout=nil, serialosc_host=nil, serialosc_port=nil)
+		pr_init_osc_server unless @@osc_server_initialized
 		Thread.new do
 			list_of_devices = nil
 
-			@@device_list_semaphore.synchronize do
+			@@async_serialoscd_response_semaphore.synchronize do
 				list_of_devices = Array.new
 
 				@@serialosc_device_response_handler = lambda { |device| list_of_devices << device }
 				pr_trace_output( "started listening to serialosc device list OSC responses" )
 
 				pr_send_message(
-					OSC::Message.new("/serialosc/list", OSCSERVER_HOST, OSCSERVER_PORT),
-					(serialosc_port or @@serialoscd_port),
+					OSC::Message.new("/serialosc/list", OSC_RUBY_SERVER_HOST, OSC_RUBY_SERVER_PORT),
+					(serialosc_port or @@default_serialoscd_port),
 					serialosc_host
 				)
 
@@ -1687,16 +1671,16 @@ class SerialOSC
 				pr_trace_output( "stopped listening to serialosc device list OSC responses" )
 			end
 
-			yield list_of_devices if block_given? # TODO: really use yield?
+			yield list_of_devices if block_given?
 		end
 	end
 
-	# TODO: compare and align Ruby and SuperCollider versions
 	def self.request_information_about_device(device_receive_port, timeout=nil, serialosc_host=nil)
+		pr_init_osc_server unless @@osc_server_initialized
 		Thread.new do
 			device_info = nil
 
-			@@device_info_semaphore.synchronize do
+			@@async_serialoscd_response_semaphore.synchronize do
 				device_info = {}
 
 				@@sys_info_response_handler = lambda do |attribute, message|
@@ -1714,7 +1698,7 @@ class SerialOSC
 				pr_trace_output( "started listening to serialosc device info OSC responses" )
 
 				pr_send_message(
-					OSC::Message.new("/sys/info", OSCSERVER_HOST, OSCSERVER_PORT),
+					OSC::Message.new("/sys/info", OSC_RUBY_SERVER_HOST, OSC_RUBY_SERVER_PORT),
 					device_receive_port,
 					serialosc_host
 				)
@@ -1727,12 +1711,12 @@ class SerialOSC
 				pr_trace_output( "stopped listening to serialosc device info OSC responses" )
 			end
 
-			yield device_info if block_given? # TODO: really use yield?
+			yield device_info if block_given?
 		end
 	end
 
-	# TODO: compare and align Ruby and SuperCollider versions
 	def self.start_tracking_connected_devices_changes(added_func, removed_func, serialosc_host=nil, serialosc_port=nil)
+		pr_init_osc_server unless @@osc_server_initialized
 		raise "Already tracking serialosc device changes." if @@is_tracking_connected_devices_changes
 		@@is_tracking_connected_devices_changes = true
 		@@device_added_func = lambda do |id|
@@ -1748,6 +1732,7 @@ class SerialOSC
 	end
 
 	def self.stop_tracking_connected_devices_changes
+		pr_init_osc_server unless @@osc_server_initialized
 		raise "Not listening for serialosc responses." unless @@is_tracking_connected_devices_changes
 		@@is_tracking_connected_devices_changes = false
 		@@device_added_func = nil
@@ -1757,8 +1742,8 @@ class SerialOSC
 
 	def self.pr_send_request_next_device_change_msg(serialosc_host, serialosc_port)
 		pr_send_message(
-			OSC::Message.new("/serialosc/notify", OSCSERVER_HOST, OSCSERVER_PORT),
-			(serialosc_port or @@serialoscd_port),
+			OSC::Message.new("/serialosc/notify", OSC_RUBY_SERVER_HOST, OSC_RUBY_SERVER_PORT),
+			(serialosc_port or @@default_serialoscd_port),
 			serialosc_host
 		)
 	end
@@ -1799,7 +1784,7 @@ class SerialOSC
 	end
 
 	def self.pr_send_message(message, port, host)
-		h = (host or @@serialoscd_host)
+		h = (host or @@default_serialoscd_host)
 		client = OSC::Client.new(host, port)
 		client.send(message)
 		pr_trace_output( "sent: '%s %s' to %s:%i" % [message.address, message.to_a.join(" "), h, port] )
@@ -1870,7 +1855,6 @@ class EncDeltaFunc < AbstractResponder
 			if type == :'/enc/delta'
 				n = args[0]
 				delta = args[1]
-				# TODO: test responder specific constraints
 				if matches_device_constraint?(sending_device, SerialOSCEnc) and matches_responder_specific_constraints?(n, delta)
 					@func.call(n, delta, time, sending_device) if @func
 				end
@@ -1902,7 +1886,6 @@ class EncKeyFunc < AbstractResponder
 			if type == :'/enc/key'
 				n = args[0]
 				state = args[1]
-				# TODO: test responder specific constraints
 				if matches_device_constraint?(sending_device, SerialOSCEnc) and matches_responder_specific_constraints?(n, state)
 					@func.call(n, state, time, sending_device) if @func
 				end
@@ -1936,7 +1919,6 @@ class GridKeyFunc < AbstractResponder
 				x = args[0]
 				y = args[1]
 				state = args[2]
-				# TODO: test responder specific constraints
 				if matches_device_constraint?(sending_device, SerialOSCGrid) and matches_responder_specific_constraints?(x, y, state)
 					@func.call(x, y, state, time, sending_device) if @func
 				end
@@ -1980,7 +1962,6 @@ class TiltFunc < AbstractResponder
 				x = args[1]
 				y = args[2]
 				z = args[3]
-				# TODO: test responder specific constraints
 				if matches_device_constraint?(sending_device, SerialOSCGrid) and matches_responder_specific_constraints?(n, x, y, z)
 					@func.call(n, x, y, z, time, sending_device) if @func
 				end
