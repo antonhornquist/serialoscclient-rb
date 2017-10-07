@@ -8,7 +8,20 @@ SerialOSCClient provides plug'n'play support for [monome](http://monome.org) gri
 
 ## Usage
 
-TODO
+### Using a grid in IRB
+
+This assumes a monome grid is connected to the computer.
+
+```
+$ cd /path/to/serialoscclient-rb
+$ rake irb
+irb> SerialOSCClient.init
+SerialOSC Devices:
+  TODO
+irb> SerialOSCGrid.test_leds # a built in demo
+irb> SerialOSCGrid.led_set(0, 0, 1) # set left-topmost led
+irb> SerialOSCGrid.led_set(0, 0, 1) # lear left-topmost led
+```
 
 ## Examples
 
