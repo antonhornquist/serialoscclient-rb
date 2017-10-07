@@ -1932,11 +1932,11 @@ class GridKeyFunc < AbstractResponder
 		(@x == nil or @x == x) and (@y == nil or @y == y) and (@state == nil or @state == state)
 	end
 
-	def self.press(func, x, y, device)
+	def self.press(func, x=nil, y=nil, device=nil)
 		self.new(func, x, y, true, device)
 	end
 
-	def self.release(func, x, y, device)
+	def self.release(func, x=nil, y=nil, device=nil)
 		self.new(func, x, y, false, device)
 	end
 end
