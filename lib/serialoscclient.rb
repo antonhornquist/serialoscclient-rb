@@ -476,6 +476,7 @@ class SerialOSCClient
 	end
 
 	def self.post_devices
+		puts ""
 		if not @@devices.empty?
 			puts "SerialOSC Devices:"
 			@@devices.each do |device|
@@ -1929,15 +1930,15 @@ class GridKeyFunc < AbstractResponder
 	end
 
 	def matches_responder_specific_constraints?(x, y, state)
-		(@x == nil or @x == x) and (@y == nil or @y == y) and (@state == nil or @state == state)
+		(@x == nil or @x == x) and (@y == nil or @y == y) and (@state == nil or (@state ? 1 : 0) == state)
 	end
 
 	def self.press(func, x=nil, y=nil, device=nil)
-		self.new(func, x, y, true, device)
+		new(func, x, y, true, device)
 	end
 
 	def self.release(func, x=nil, y=nil, device=nil)
-		self.new(func, x, y, false, device)
+		new(func, x, y, false, device)
 	end
 end
 
