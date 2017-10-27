@@ -163,6 +163,7 @@ class SerialOSCClient
 	attr_accessor :permanent
 	attr_reader :enc_spec, :grid_spec
 	attr_reader :enc, :grid
+	attr_reader :active
 
 	attr_accessor :will_free, :on_free
 	@will_free = nil
@@ -566,6 +567,8 @@ class SerialOSCClient
 
 		func.call(self) if func
 
+		@active = true
+
 		SerialOSCClient.do_when_initialized(
 			lambda { find_and_route_unused_devices_to_client(false) if @autoroute }
 		)
@@ -696,10 +699,10 @@ class SerialOSCClient
 		)
 		@tilt_responder.permanent = true
 		@grid.client = self
-		@on_grid_routed.call(self) if @on_grid_routed
+		@on_grid_routed.call(self, @grid) if @on_grid_routed
 		SerialOSCClientNotification.device_routed(@grid, self)
 		warn_if_grid_does_not_match_spec
-		refresh_grid
+		clear_and_refresh_grid
 	end
 
 	def pr_route_enc_to_client(enc)
@@ -723,10 +726,10 @@ class SerialOSCClient
 		)
 		@enc_key_responder.permanent = true
 		@enc.client = self
-		@on_enc_routed.call(self) if @on_enc_routed
+		@on_enc_routed.call(self, @enc) if @on_enc_routed
 		SerialOSCClientNotification.device_routed(@enc, self)
 		warn_if_enc_does_not_match_spec
-		refresh_enc
+		clear_and_refresh_enc
 	end
 
 	def to_serialoscclient
@@ -833,15 +836,27 @@ class SerialOSCClient
 
 	def refresh_grid
 		if @grid
-			clear_leds
 			@grid_refresh_action.call(self) if @grid_refresh_action
+		end
+	end
+
+	def clear_and_refresh_grid
+		if @grid
+			clear_leds
+			refresh_grid
 		end
 	end
 
 	def refresh_enc
 		if @enc
-			clear_rings
 			@enc_refresh_action.call(self) if @enc_refresh_action
+		end
+	end
+
+	def clear_and_refresh_enc
+		if @enc
+			clear_rings
+			refresh_enc
 		end
 	end
 
@@ -872,11 +887,14 @@ class SerialOSCClient
 	end
 
 	def free
-		@will_free.call(self) if @will_free
-		unroute_grid if uses_grid
-		unroute_enc if uses_enc
-		@on_free.call(self) if @on_free
-		@@all.delete(self)
+		if @@all.include? self
+			@will_free.call(self) if @will_free
+			unroute_grid if uses_grid
+			unroute_enc if uses_enc
+			@@all.delete(self)
+			@active = false
+			@on_free.call(self) if @on_free
+		end
 	end
 
 	def clear_leds
@@ -1307,7 +1325,10 @@ class SerialOSCGrid < SerialOSCDevice
 		SerialOSC.change_device_rotation(@port, degrees)
 		@rotation = degrees
 		changed(:rotation, degrees)
-		@client.warn_if_grid_does_not_match_spec if @client
+		if @client
+			@client.warn_if_grid_does_not_match_spec
+			@client.clear_and_refresh_grid
+		end
 	end
 
 	def pr_device_num_cols_from_type
