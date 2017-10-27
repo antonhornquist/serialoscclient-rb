@@ -6,40 +6,13 @@ SuperCollider client for SerialOSC compliant devices
 
 SerialOSCClient provides plug'n'play support for [monome](http://monome.org) grids, arcs and other SerialOSC compliant devices.
 
-## Usage
-
-### Using a grid in IRB
-
-This assumes a monome grid is connected to the computer.
-
-```
-$ cd /path/to/serialoscclient-rb
-$ rake irb
-irb> SerialOSCClient.init
-SerialOSC Devices:
-  TODO
-irb> SerialOSCGrid.test_leds # a built in demo
-irb> SerialOSCGrid.led_set(0, 0, 1) # set left-topmost led
-irb> SerialOSCGrid.led_set(0, 0, 1) # lear left-topmost led
-```
-
-## Examples
-
-TODO
-
-## Documentation
-
-TODO
-
 ## Implementation
 
-This is a Ruby port of my SuperCollider library [SerialOSCClient-sc](http://github.com/antonhornquist/SerialOSCClient-sc). If you intend to use this library beware of the monkey patching done in order to use a collection of SuperCollider extensions ported to Ruby.
+This is a less maintained Ruby port of my SuperCollider library [SerialOSCClient-sc](http://github.com/antonhornquist/SerialOSCClient-sc). If you intend to use this library beware of the monkey patching done in order to use a collection of SuperCollider extensions ported to Ruby.
 
 ## Requirements
 
 This code has been developed and tested in Ruby 2.3.3 and JRuby 9.1.6.0. ```Grrr::ScreenGrid``` only works for JRuby.
-
-## Installation
 
 ## License
 
