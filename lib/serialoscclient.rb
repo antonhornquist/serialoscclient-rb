@@ -1668,7 +1668,7 @@ class SerialOSC
 		end
 	end
 
-	def self.request_list_of_devices(timeout=nil, serialosc_host=nil, serialosc_port=nil)
+	def self.request_list_of_devices(timeout=nil, serialoscd_host=nil, serialoscd_port=nil)
 		pr_init_osc_server unless @@osc_server_initialized
 		Thread.new do
 			list_of_devices = nil
@@ -1681,8 +1681,8 @@ class SerialOSC
 
 				pr_send_message(
 					OSC::Message.new("/serialosc/list", OSC_RUBY_SERVER_HOST, OSC_RUBY_SERVER_PORT),
-					(serialosc_port or @@default_serialoscd_port),
-					serialosc_host
+					(serialoscd_port or @@default_serialoscd_port),
+					serialoscd_host
 				)
 
 				sleeptime = (timeout or DEFAULT_TIMEOUT)
@@ -1697,7 +1697,7 @@ class SerialOSC
 		end
 	end
 
-	def self.request_information_about_device(device_receive_port, timeout=nil, serialosc_host=nil)
+	def self.request_information_about_device(device_receive_port, timeout=nil, serialoscd_host=nil)
 		pr_init_osc_server unless @@osc_server_initialized
 		Thread.new do
 			device_info = nil
@@ -1722,7 +1722,7 @@ class SerialOSC
 				pr_send_message(
 					OSC::Message.new("/sys/info", OSC_RUBY_SERVER_HOST, OSC_RUBY_SERVER_PORT),
 					device_receive_port,
-					serialosc_host
+					serialoscd_host
 				)
 
 				sleeptime = (timeout or DEFAULT_TIMEOUT)
@@ -1737,20 +1737,20 @@ class SerialOSC
 		end
 	end
 
-	def self.start_tracking_connected_devices_changes(added_func, removed_func, serialosc_host=nil, serialosc_port=nil)
+	def self.start_tracking_connected_devices_changes(added_func, removed_func, serialoscd_host=nil, serialoscd_port=nil)
 		pr_init_osc_server unless @@osc_server_initialized
 		raise "Already tracking serialosc device changes." if @@is_tracking_connected_devices_changes
 		@@is_tracking_connected_devices_changes = true
 		@@device_added_func = lambda do |id|
 			added_func.call(id)
-			pr_send_request_next_device_change_msg(serialosc_host, serialosc_port)
+			pr_send_request_next_device_change_msg(serialoscd_host, serialoscd_port)
 		end
 		@@device_removed_func = lambda do |id|
 			removed_func.call(id)
-			pr_send_request_next_device_change_msg(serialosc_host, serialosc_port)
+			pr_send_request_next_device_change_msg(serialoscd_host, serialoscd_port)
 		end
 		pr_trace_output( "started listening to serialosc device add / remove OSC messages" )
-		pr_send_request_next_device_change_msg(serialosc_host, serialosc_port)
+		pr_send_request_next_device_change_msg(serialoscd_host, serialoscd_port)
 	end
 
 	def self.stop_tracking_connected_devices_changes
@@ -1762,46 +1762,46 @@ class SerialOSC
 		pr_trace_output( "stopped listening to serialosc device add / remove OSC messages" )
 	end
 
-	def self.pr_send_request_next_device_change_msg(serialosc_host, serialosc_port)
+	def self.pr_send_request_next_device_change_msg(serialoscd_host, serialoscd_port)
 		pr_send_message(
 			OSC::Message.new("/serialosc/notify", OSC_RUBY_SERVER_HOST, OSC_RUBY_SERVER_PORT),
-			(serialosc_port or @@default_serialoscd_port),
-			serialosc_host
+			(serialoscd_port or @@default_serialoscd_port),
+			serialoscd_host
 		)
 	end
 
-	def self.change_device_destination_port(device_receive_port, device_destination_port, serialosc_host=nil)
+	def self.change_device_destination_port(device_receive_port, device_destination_port, serialoscd_host=nil)
 		pr_send_message(
 			OSC::Message.new("/sys/port", device_destination_port),
 			device_receive_port,
-			serialosc_host
+			serialoscd_host
 		)
 	end
 
-	def self.change_device_destination_host(device_receive_port, device_destination_host, serialosc_host=nil)
+	def self.change_device_destination_host(device_receive_port, device_destination_host, serialoscd_host=nil)
 		pr_send_message(
 			OSC::Message.new("/sys/host", device_destination_host),
 			device_receive_port,
-			serialosc_host
+			serialoscd_host
 		)
 	end
 
-	def self.change_device_message_prefix(device_receive_port, device_message_prefix, serialosc_host=nil)
+	def self.change_device_message_prefix(device_receive_port, device_message_prefix, serialoscd_host=nil)
 		pr_send_message(
 			OSC::Message.new("/sys/prefix", device_message_prefix.to_s),
 			device_receive_port,
-			serialosc_host
+			serialoscd_host
 		)
 	end
 
-	def self.change_device_rotation(device_receive_port, device_rotation, serialosc_host=nil)
+	def self.change_device_rotation(device_receive_port, device_rotation, serialoscd_host=nil)
 		rotation = device_rotation.to_i
 		raise ("Invalid rotation: %i" % [rotation]) unless [0, 90, 180, 270].include?(rotation)
 
 		pr_send_message(
 			OSC::Message.new("/sys/rotation", rotation),
 			device_receive_port,
-			serialosc_host
+			serialoscd_host
 		)
 	end
 
