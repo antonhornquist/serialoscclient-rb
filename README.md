@@ -1,6 +1,6 @@
 # serialoscclient-rb
 
-SuperCollider client for SerialOSC compliant devices
+SuperCollider support for SerialOSC compliant devices
 
 ## Description
 
