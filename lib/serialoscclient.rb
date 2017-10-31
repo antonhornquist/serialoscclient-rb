@@ -1430,7 +1430,6 @@ class SerialOSCEnc < SerialOSCDevice
 
 	def self.ring_all(n, level)
 		do_with_default_when_initialized(lambda { |enc| enc.ring_all(n, level) })
-		@@default. if @@default
 	end
 
 	def self.ring_map(n, levels)
