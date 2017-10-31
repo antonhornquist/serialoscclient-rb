@@ -1,6 +1,6 @@
 # serialoscclient-rb
 
-SuperCollider support for SerialOSC compliant devices
+SerialOSC device (monome grid, arc) support for Ruby
 
 ## Description
 
