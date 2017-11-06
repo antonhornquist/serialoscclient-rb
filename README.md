@@ -10,7 +10,7 @@ SerialOSCClient provides plug'n'play support for [monome](http://monome.org) gri
 
 This library requires the [osc-ruby](https://github.com/aberant/osc-ruby) gem.
 
-This code has been developed and tested in Ruby 2.3.3 and JRuby 9.1.6.0. ```Grrr::ScreenGrid``` only works for JRuby.
+This code has been developed and tested in Ruby 2.3.3 and JRuby 9.1.6.0.
 
 ## Installation
 
