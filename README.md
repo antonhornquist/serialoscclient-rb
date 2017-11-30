@@ -32,7 +32,7 @@ Download serialoscclient-rb. Add the ```lib``` folder of serialoscclient-rb to t
 
 ## Implementation
 
-This is a **less maintained** Ruby port of my SuperCollider library [SerialOSCClient-sc](http://github.com/antonhornquist/SerialOSCClient-sc).
+This is a Ruby port of the [SerialOSCClient-sc](http://github.com/antonhornquist/SerialOSCClient-sc) SuperCollider library.
 
 If you intend to use this library beware of the monkey patching due to port of a collection of SuperCollider extensions to Ruby.
 
