@@ -4,6 +4,8 @@ SerialOSC device (monome grid, arc) support for Ruby
 
 ## Description
 
+This is a *less maintained* port of the [SerialOSCClient-sc](http://github.com/antonhornquist/SerialOSCClient-sc) SuperCollider library. Please report bugs.
+
 SerialOSCClient provides plug'n'play support for [monome](http://monome.org) grids, arcs and other SerialOSC compliant devices.
 
 ## Requirements
