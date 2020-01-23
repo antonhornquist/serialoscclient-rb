@@ -1225,6 +1225,8 @@ class SerialOSCGrid < SerialOSCDevice
 	end
 
 	def test_leds
+		unroute
+
 		Thread.new do
 			clear_leds
 			num_rows.times do |y|
@@ -1445,6 +1447,8 @@ class SerialOSCEnc < SerialOSCDevice
 	end
 
 	def test_leds
+		unroute
+
 		Thread.new do
 			clear_rings
 			num_encs.times do |n|
